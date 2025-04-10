@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:weather_app/providers/lib/providers/weather_provider.dart';
 
+
+
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
@@ -29,6 +31,97 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final weatherData = ref.watch(weatherProvider(currentCity));
 
     return Scaffold(
+      appBar: AppBar(
+  elevation: 0,
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF3366FF),
+          Color(0xFF4F7AFF),
+        ],
+      ),
+    ),
+  ),
+  title: Row(
+    children: [
+      const Icon(
+        Icons.wb_sunny_outlined,
+        color: Colors.white,
+        size: 28,
+      ),
+      const SizedBox(width: 10),
+      const Text(
+        'Weather App',
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontFamily: 'bold',
+        ),
+      ),
+    ],
+  ),
+  actions: [
+    IconButton(
+      onPressed: () {
+        try {
+          // Show loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Getting current location...')),
+          );
+          
+          // Call the location method with proper error handling
+          showCurrentLocationWeather();
+        } catch (e) {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Location error: $e. Please try again.')),
+          );
+        }
+      },
+      tooltip: 'Use current location',
+      icon: const Icon(
+        Icons.my_location,
+        color: Colors.white,
+        size: 24,
+      ),
+    ),
+    IconButton(
+      onPressed: () {
+        // Optional: Navigate to settings
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings')),
+        );
+      },
+      tooltip: 'Settings',
+      icon: const Icon(
+        Icons.more_vert,
+        color: Colors.white,
+        size: 24,
+      ),
+    ),
+    const SizedBox(width: 6),
+  ],
+  leading: IconButton(
+    onPressed: () {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This is the main screen')),
+        );
+      }
+    },
+    icon: const Icon(
+      Icons.arrow_back_ios_new,
+      color: Colors.white,
+      size: 22,
+    ),
+  ),
+),
       body: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
@@ -207,7 +300,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 if (!isLandscape) ...[
                   SizedBox(height: 30 * textScaleFactor),
                   ElevatedButton.icon(
-                    onPressed: showCurrentLocationWeather,
+                    onPressed: (){},
                     icon: Icon(Icons.my_location),
                     label: Text("Use My Location"),
                     style: ElevatedButton.styleFrom(
@@ -248,16 +341,37 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     textController.clear();
   }
 
-  void showCurrentLocationWeather() {
-    // Watch the current location weather provider
-    ref.read(currentLocationWeatherProvider.future).then((weather) {
-      // Update the city provider with the current location's city name
-      ref.read(currentCityProvider.notifier).state = weather.city;
-    }).catchError((error) {
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error getting location: $error')),
-      );
-    });
+
+
+
+void showCurrentLocationWeather() {
+  // Show loading indicator
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Getting your location...')),
+  );
+  
+  // Watch the current location weather provider with improved error handling
+  ref.read(currentLocationWeatherProvider.future).then((weather) {
+    // Update the city provider with the current location's city name
+    ref.read(currentCityProvider.notifier).state = weather.city;
+    
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Showing weather for ${weather.city}')),
+    );
+  }).catchError((error) {
+    // Show detailed error with guidance
+    print("Location error: $error");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Location error: Please check that location permissions are granted and GPS is enabled.'),
+        duration: Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () {},
+        ),
+      ),
+    );
+  });
   }
 }

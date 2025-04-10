@@ -24,8 +24,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+/*
+add a app bar 
+and add riverpod
+and watch video of delivvety app
+*/
+
 /*
 // add notes (use riverpod)
 // and also gride view page 
 // add sign in page 
+
+// add ideas to kool morocco 
 */
