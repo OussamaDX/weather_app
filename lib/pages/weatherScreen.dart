@@ -1,146 +1,263 @@
-
-import 'dart:convert';
-import 'dart:math';
 import 'dart:developer' as developer;
 import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart' as http;
-import 'package:weather_app/constants/constants.dart';
-import 'package:weather_app/model/WeatherModel.dart';
-import 'package:weather_app/service/call_to_api.dart';
+import 'package:weather_app/providers/lib/providers/weather_provider.dart';
 
-class WeatherScreen extends StatefulWidget {
+class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
   @override
-  State<WeatherScreen> createState() => _WeatherScreenState();
+  ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
 }
 
-class _WeatherScreenState extends State<WeatherScreen> {
-  late Future<Weathermodel> _weatherData;
-  final String nameCity = "Rabat";
-  final String assetName = 'https://www.flaticon.com/free-icon/location_2838912?term=location&page=1&position=3&origin=search&related_id=2838912';
+class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   TextEditingController textController = TextEditingController(text: "");
 
   @override
-  void initState() {
-    super.initState();
-    _weatherData = getWeatherData(false, nameCity);
-  }
+  Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+    final isLandscape = screenSize.width > screenSize.height;
+    
+    // Get the current city from provider
+    final currentCity = ref.watch(currentCityProvider);
+    
+    // Watch the weather data based on current city
+    final weatherData = ref.watch(weatherProvider(currentCity));
 
-  Future<Weathermodel> getWeatherData(bool isCurrentCity, String cityName) async {
-    return await CallToApi().CallWeatherModel(isCurrentCity, cityName);
-  }
-
-  @override
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF3366FF), // Top gradient color
-            Color(0xFFFF9933), // Bottom gradient color
-          ],
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF3366FF), // Top gradient color
+                Color(0xFFFF9933), // Bottom gradient color
+              ],
+            ),
+          ),
+          child: isLandscape 
+              ? _buildLandscapeLayout(weatherData, screenSize, isSmallScreen)
+              : _buildPortraitLayout(weatherData, screenSize, isSmallScreen),
         ),
+      ),
+    );
+  }
+
+  // Layout for portrait orientation
+  Widget _buildPortraitLayout(AsyncValue weatherData, Size screenSize, bool isSmallScreen) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenSize.width * 0.05, // 5% of screen width
       ),
       child: Column(
         children: [
-          // Search bar at the top
+          // Search bar at the top with responsive sizing
           Padding(
-            padding: const EdgeInsets.only(top: 40, left: 20, right: 20), // Add padding to keep it away from screen edges
+            padding: EdgeInsets.only(
+              top: screenSize.height * 0.02, // 2% of screen height
+            ),
             child: AnimSearchBar(
               rtl: true,
-              width: MediaQuery.of(context).size.width - 40,
+              width: screenSize.width * 0.9, // 90% of screen width
               color: Color(0xffffb56b),
               textController: textController,
               suffixIcon: Icon(
                 Icons.search,
                 color: Colors.black,
-                size: 26,
+                size: isSmallScreen ? 22 : 26,
               ),
-              onSuffixTap: () async {
-                if (textController.text.isEmpty) {
-                  developer.log("No city entered");
-                } else {
-                  setState(() {
-                    _weatherData = getWeatherData(false, textController.text);
-                  });
-                }
-                FocusScope.of(context).unfocus();
-                textController.clear();
-              },
+              onSuffixTap: _handleSearch,
               onSubmitted: (_) {},
               style: TextStyle(color: Colors.red),
             ),
           ),
-          const SizedBox(height: 20), // Spacing between the search bar and the rest of the content
-          // Weather data in the center
+          
+          SizedBox(height: screenSize.height * 0.03), // 3% of screen height
+          
+          // Weather content
           Expanded(
-            child: FutureBuilder<Weathermodel>(
-              future: _weatherData,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData) {
-                  final weather = snapshot.data!;
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/images/location.svg',
-                            color: Colors.white,
-                            width: 20,
-                            height: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '${weather.city}',
-                            style: const TextStyle(
-                              fontSize: 27,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '${weather.desc}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Text(
-                        '${weather.temp}°C',
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return const Center(child: Text('No data available'));
-                }
-              },
+            child: _buildWeatherContent(
+              weatherData, 
+              isSmallScreen ? 0.8 : 1.0, // Text size scale factor
+              isLandscape: false,
             ),
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  // Layout for landscape orientation
+  Widget _buildLandscapeLayout(AsyncValue weatherData, Size screenSize, bool isSmallScreen) {
+    return Row(
+      children: [
+        // Left side with search
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: EdgeInsets.all(screenSize.width * 0.03),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Search bar
+                AnimSearchBar(
+                  rtl: true,
+                  width: screenSize.width * 0.4, // 40% of screen width
+                  color: Color(0xffffb56b),
+                  textController: textController,
+                  suffixIcon: Icon(
+                    Icons.search,
+                    color: Colors.black,
+                    size: isSmallScreen ? 20 : 24,
+                  ),
+                  onSuffixTap: _handleSearch,
+                  onSubmitted: (_) {},
+                  style: TextStyle(color: Colors.red),
+                ),
+                
+                SizedBox(height: screenSize.height * 0.05),
+                
+                // Location button
+                ElevatedButton.icon(
+                  onPressed: showCurrentLocationWeather,
+                  icon: Icon(Icons.my_location),
+                  label: Text(
+                    "Use My Location",
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 12 : 14,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Right side with weather info
+        Expanded(
+          flex: 3,
+          child: _buildWeatherContent(
+            weatherData, 
+            isSmallScreen ? 0.7 : 0.9, // Text size scale factor
+            isLandscape: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Weather content (used in both layouts)
+  Widget _buildWeatherContent(AsyncValue weatherData, double textScaleFactor, {required bool isLandscape}) {
+    return weatherData.when(
+      data: (weather) {
+        return Container(
+          alignment: Alignment.center,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/location.svg',
+                      color: Colors.white,
+                      width: 20 * textScaleFactor,
+                      height: 20 * textScaleFactor,
+                    ),
+                    SizedBox(width: 10 * textScaleFactor),
+                    Text(
+                      weather.city,
+                      style: TextStyle(
+                        fontSize: 27 * textScaleFactor,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12 * textScaleFactor),
+                Text(
+                  weather.desc,
+                  style: TextStyle(
+                    fontSize: 16 * textScaleFactor,
+                    color: Colors.white70,
+                  ),
+                ),
+                SizedBox(height: 15 * textScaleFactor),
+                Text(
+                  '${weather.temp}°C',
+                  style: TextStyle(
+                    fontSize: 30 * textScaleFactor,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                // Only show the location button in portrait mode
+                if (!isLandscape) ...[
+                  SizedBox(height: 30 * textScaleFactor),
+                  ElevatedButton.icon(
+                    onPressed: showCurrentLocationWeather,
+                    icon: Icon(Icons.my_location),
+                    label: Text("Use My Location"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Error: $error',
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Handle search functionality
+  void _handleSearch() {
+    if (textController.text.isNotEmpty) {
+      // Update the city provider which will trigger a rebuild
+      ref.read(currentCityProvider.notifier).state = textController.text;
+      developer.log("Searching for city: ${textController.text}");
+    } else {
+      developer.log("No city entered");
+    }
+    FocusScope.of(context).unfocus();
+    textController.clear();
+  }
+
+  void showCurrentLocationWeather() {
+    // Watch the current location weather provider
+    ref.read(currentLocationWeatherProvider.future).then((weather) {
+      // Update the city provider with the current location's city name
+      ref.read(currentCityProvider.notifier).state = weather.city;
+    }).catchError((error) {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error getting location: $error')),
+      );
+    });
+  }
 }

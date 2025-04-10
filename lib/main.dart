@@ -1,17 +1,14 @@
-import 'dart:convert';
-import 'dart:math';
-import 'dart:developer' as developer;
-import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:http/http.dart' as http;
-import 'package:weather_app/constants/constants.dart';
-import 'package:weather_app/model/WeatherModel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/pages/weatherScreen.dart';
-import 'package:weather_app/service/call_to_api.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    // Wrap your app with ProviderScope to enable Riverpod
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -26,3 +23,9 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+/*
+// add notes (use riverpod)
+// and also gride view page 
+// add sign in page 
+*/
