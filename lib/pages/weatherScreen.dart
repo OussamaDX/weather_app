@@ -3,7 +3,7 @@ import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:weather_app/providers/lib/providers/weather_provider.dart';
+import 'package:weather_app/providers/lib/weather_provider.dart';
 
 
 

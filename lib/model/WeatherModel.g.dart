@@ -18,5 +18,3 @@ Map<String, dynamic> _$WeathermodelToJson(Weathermodel instance) =>
       'city': instance.city,
       'desc': instance.desc,
     };
-
-

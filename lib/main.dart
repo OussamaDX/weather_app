@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:weather_app/pages/notesPage.dart';
 import 'package:weather_app/pages/weatherScreen.dart';
+import 'package:weather_app/pages/welcomePage.dart';
 
 void main() {
   runApp(
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Weather App',
-      home: const WeatherScreen(),
+      home: const Notespage(),
     );
   }
 }
