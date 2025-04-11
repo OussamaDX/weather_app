@@ -3,6 +3,9 @@ import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/route_manager.dart';
+import 'package:weather_app/pages/notesPage.dart';
+import 'package:weather_app/pages/welcomePage.dart';
 import 'package:weather_app/providers/lib/weather_provider.dart';
 
 
@@ -91,29 +94,35 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     ),
     IconButton(
       onPressed: () {
-        // Optional: Navigate to settings
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings')),
-        );
+            Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return const Notespage();
+            },
+          ));
       },
       tooltip: 'Settings',
       icon: const Icon(
-        Icons.more_vert,
+        Icons.note,
         color: Colors.white,
-        size: 24,
+        size: 27,
       ),
     ),
     const SizedBox(width: 6),
   ],
   leading: IconButton(
     onPressed: () {
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This is the main screen')),
-        );
-      }
+      Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return const WelcomePage();
+            },
+          ));
+      // if (Navigator.of(context).canPop()) {
+      //   Navigator.of(context).pop();
+      // } else {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text('This is the main screen')),
+      //   );
+      // }
     },
     icon: const Icon(
       Icons.arrow_back_ios_new,

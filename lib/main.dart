@@ -21,22 +21,20 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Weather App',
-      home: const Notespage(),
+      home: const WelcomePage(),
     );
   }
 }
 
 
 /*
-add a app bar 
-and add riverpod
+add spalsh animation 
+and explore some firebase basic
 and watch video of delivvety app
 */
 
 /*
-// add notes (use riverpod)
 // and also gride view page 
-// add sign in page 
 
 // add ideas to kool morocco 
 */
